@@ -216,7 +216,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
             ))}
           </div>
         </div>
-      )}
+      ))}
     </div>
   );
 };
