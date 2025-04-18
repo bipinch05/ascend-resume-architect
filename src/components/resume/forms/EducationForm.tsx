@@ -25,6 +25,8 @@ const EducationForm = () => {
 
   // Track if form has been initialized
   const formInitialized = useRef(false);
+  // Track if autosave is enabled
+  const autosaveEnabled = useRef(false);
 
   const {
     register,
@@ -62,9 +64,19 @@ const EducationForm = () => {
   // Set the form as initialized after the first render
   useEffect(() => {
     formInitialized.current = true;
+    
+    // Add a small delay before enabling autosave to prevent initial save
+    const timer = setTimeout(() => {
+      autosaveEnabled.current = true;
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const onSubmit = (data: EducationFormValues) => {
+    // Disable autosave during manual save
+    autosaveEnabled.current = false;
+    
     // Clear existing education entries
     education.forEach((edu) => removeEducation(edu.id));
 
@@ -78,6 +90,11 @@ const EducationForm = () => {
       description: "Education saved successfully",
       variant: "default",
     });
+    
+    // Re-enable autosave after a short delay
+    setTimeout(() => {
+      autosaveEnabled.current = true;
+    }, 1000);
 
     setStep(3); // Move to the next step (Skills)
   };
@@ -100,26 +117,31 @@ const EducationForm = () => {
   // Setup auto-save with debounce
   const debouncedSave = useRef(
     debounce((data: EducationFormValues) => {
-      if (!formInitialized.current) return;
+      if (!formInitialized.current || !autosaveEnabled.current) return;
       
-      // Clear existing education entries to avoid duplication
-      const existingIds = new Set(education.map(edu => edu.id));
-      const formIds = new Set(data.education.filter(edu => edu.id).map(edu => edu.id));
+      // Create a map of existing education entries by ID for quick lookup
+      const existingEduMap = new Map(education.map(edu => [edu.id, edu]));
       
-      // Remove education entries that no longer exist in the form
-      education.forEach((edu) => {
-        if (!formIds.has(edu.id)) {
-          removeEducation(edu.id);
+      // Create a map of form education entries by ID for quick lookup
+      const formEduMap = new Map(
+        data.education.filter(edu => edu.id).map(edu => [edu.id, edu])
+      );
+      
+      // IDs that no longer exist in the form should be removed
+      existingEduMap.forEach((_, id) => {
+        if (!formEduMap.has(id)) {
+          removeEducation(id);
         }
       });
 
       // Update or add education entries
       data.education.forEach((edu) => {
-        if (edu.id && existingIds.has(edu.id)) {
+        if (edu.id && existingEduMap.has(edu.id)) {
           // Update existing education
           updateEducation(edu.id, edu);
-        } else {
-          // Add new education
+        } else if (!edu.id) {
+          // Only add new education if they don't have an ID yet
+          // (prevents duplicate additions)
           const { id, ...eduWithoutId } = edu;
           addEducation(eduWithoutId);
         }
@@ -136,7 +158,7 @@ const EducationForm = () => {
   const watchAllEducation = watch();
 
   useEffect(() => {
-    if (formInitialized.current && fields.length > 0) {
+    if (formInitialized.current && fields.length > 0 && autosaveEnabled.current) {
       debouncedSave(watchAllEducation);
     }
   }, [watchAllEducation, debouncedSave, fields.length]);

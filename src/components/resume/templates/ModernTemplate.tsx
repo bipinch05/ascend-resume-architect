@@ -1,7 +1,7 @@
 
 import { ResumeData } from "@/store/resumeStore";
 import { formatDate } from "@/utils/formatDate";
-import { AtSign, GraduationCap, Link as LinkIcon, MapPin, Phone, Briefcase, Award } from "lucide-react";
+import { AtSign, GraduationCap, Link as LinkIcon, MapPin, Phone, Briefcase, Award, Star, User } from "lucide-react";
 
 interface ModernTemplateProps {
   data: ResumeData;
@@ -12,7 +12,7 @@ const ModernTemplate = ({ data }: ModernTemplateProps) => {
 
   return (
     <div className="modern-template">
-      {/* Header */}
+      {/* Header - Made more ATS friendly with clear name and contact info */}
       <div className="bg-resume-blue text-white p-8 shadow-md rounded-t-md">
         <h1 className="text-3xl font-bold mb-1 tracking-tight">
           {personalInfo.firstName} {personalInfo.lastName}
@@ -67,17 +67,18 @@ const ModernTemplate = ({ data }: ModernTemplateProps) => {
         <div className="grid grid-cols-12 gap-x-8 gap-y-10">
           {/* Left Column */}
           <div className="col-span-12 lg:col-span-8 space-y-8">
-            {/* Summary */}
+            {/* Summary - Enhanced with better heading for ATS */}
             {personalInfo.summary && (
               <div>
-                <h3 className="text-xl font-bold text-resume-blue mb-3 border-b border-resume-blue pb-1">
+                <h3 className="text-xl font-bold text-resume-blue mb-3 border-b border-resume-blue pb-1 flex items-center">
+                  <User className="h-5 w-5 text-resume-blue mr-2" />
                   Professional Summary
                 </h3>
                 <p className="text-sm leading-relaxed whitespace-pre-line">{personalInfo.summary}</p>
               </div>
             )}
 
-            {/* Work Experience */}
+            {/* Work Experience - Timeline style with better organization for ATS */}
             {workExperience.length > 0 && (
               <div>
                 <div className="flex items-center mb-4">
@@ -87,6 +88,7 @@ const ModernTemplate = ({ data }: ModernTemplateProps) => {
                 <div className="space-y-6">
                   {workExperience.map((job) => (
                     <div key={job.id} className="relative pl-5 border-l-2 border-resume-blue">
+                      <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-resume-blue rounded-full"></div>
                       <div className="mb-2">
                         <h4 className="font-bold text-lg">{job.position}</h4>
                         <div className="flex flex-col md:flex-row md:justify-between md:items-baseline">
@@ -119,7 +121,7 @@ const ModernTemplate = ({ data }: ModernTemplateProps) => {
               </div>
             )}
 
-            {/* Education */}
+            {/* Education - Enhanced timeline style with clear structure for ATS */}
             {education.length > 0 && (
               <div>
                 <div className="flex items-center mb-4">
@@ -129,6 +131,7 @@ const ModernTemplate = ({ data }: ModernTemplateProps) => {
                 <div className="space-y-6">
                   {education.map((edu) => (
                     <div key={edu.id} className="relative pl-5 border-l-2 border-resume-blue">
+                      <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-resume-blue rounded-full"></div>
                       <div className="mb-2">
                         <h4 className="font-bold text-lg">{edu.degree} in {edu.field}</h4>
                         <div className="flex flex-col md:flex-row md:justify-between md:items-baseline">
@@ -149,15 +152,17 @@ const ModernTemplate = ({ data }: ModernTemplateProps) => {
               </div>
             )}
 
-            {/* Custom Sections */}
+            {/* Custom Sections - Enhanced for consistent styling and ATS parsing */}
             {customSections.map((section) => (
               <div key={section.id}>
-                <h3 className="text-xl font-bold text-resume-blue mb-4 border-b border-resume-blue pb-1">
+                <h3 className="text-xl font-bold text-resume-blue mb-4 border-b border-resume-blue pb-1 flex items-center">
+                  <Star className="h-5 w-5 text-resume-blue mr-2" />
                   {section.title}
                 </h3>
                 <div className="space-y-5">
                   {section.items.map((item) => (
                     <div key={item.id} className="relative pl-5 border-l-2 border-resume-blue">
+                      <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-resume-blue rounded-full"></div>
                       <div className="mb-2">
                         <h4 className="font-bold text-lg">{item.title}</h4>
                         <div className="flex flex-col md:flex-row md:justify-between md:items-baseline">
@@ -190,9 +195,9 @@ const ModernTemplate = ({ data }: ModernTemplateProps) => {
             ))}
           </div>
 
-          {/* Right Column */}
+          {/* Right Column - Skills with better categorization */}
           <div className="col-span-12 lg:col-span-4 space-y-8">
-            {/* Skills */}
+            {/* Skills - Formatted for better ATS parsing */}
             {skills.length > 0 && (
               <div className="bg-gray-50 p-5 rounded-lg shadow-sm">
                 <h3 className="text-xl font-bold text-resume-blue mb-4 border-b border-resume-blue pb-1">

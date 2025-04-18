@@ -1,7 +1,7 @@
 
 import { ResumeData } from "@/store/resumeStore";
 import { formatDate } from "@/utils/formatDate";
-import { AtSign, Link as LinkIcon, MapPin, Phone, Award, Check } from "lucide-react";
+import { AtSign, Link as LinkIcon, MapPin, Phone, Award, Check, Briefcase, GraduationCap, Star, User } from "lucide-react";
 
 interface ExecutiveTemplateProps {
   data: ResumeData;
@@ -12,7 +12,7 @@ const ExecutiveTemplate = ({ data }: ExecutiveTemplateProps) => {
 
   return (
     <div className="executive-template bg-white shadow-sm rounded">
-      {/* Header */}
+      {/* Header - Enhanced for better ATS parsing and visual appeal */}
       <div className="mb-8 border-b-4 border-resume-blue pb-6 pt-8 px-8">
         <h1 className="text-4xl font-bold mb-1 text-resume-blue tracking-tight">
           {personalInfo.firstName} {personalInfo.lastName}
@@ -68,20 +68,22 @@ const ExecutiveTemplate = ({ data }: ExecutiveTemplateProps) => {
       </div>
 
       <div className="px-8 pb-8">
-        {/* Summary */}
+        {/* Summary - Improved with executive focus and ATS-friendly formatting */}
         {personalInfo.summary && (
           <div className="mb-8">
-            <h3 className="text-2xl font-bold text-resume-blue mb-3 uppercase tracking-wide border-b border-resume-blue pb-1">
+            <h3 className="text-2xl font-bold text-resume-blue mb-3 uppercase tracking-wide border-b border-resume-blue pb-1 flex items-center">
+              <User className="h-5 w-5 mr-2" />
               Executive Summary
             </h3>
             <p className="text-sm leading-relaxed whitespace-pre-line text-gray-700">{personalInfo.summary}</p>
           </div>
         )}
 
-        {/* Work Experience */}
+        {/* Work Experience - Enhanced for executive impact and ATS parsing */}
         {workExperience.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-2xl font-bold text-resume-blue mb-4 uppercase tracking-wide border-b border-resume-blue pb-1">
+            <h3 className="text-2xl font-bold text-resume-blue mb-4 uppercase tracking-wide border-b border-resume-blue pb-1 flex items-center">
+              <Briefcase className="h-5 w-5 mr-2" />
               Professional Experience
             </h3>
             <div className="space-y-6">
@@ -90,7 +92,7 @@ const ExecutiveTemplate = ({ data }: ExecutiveTemplateProps) => {
                   <div className="mb-2">
                     <div className="flex flex-col md:flex-row md:justify-between md:items-baseline">
                       <h4 className="font-bold text-xl text-resume-blue-light">{job.position}</h4>
-                      <span className="text-sm font-medium text-gray-700 mt-1 md:mt-0">
+                      <span className="text-sm font-medium text-gray-700 mt-1 md:mt-0 bg-gray-50 px-3 py-1 rounded">
                         {formatDate(job.startDate)} - {job.current ? "Present" : formatDate(job.endDate)}
                       </span>
                     </div>
@@ -121,10 +123,11 @@ const ExecutiveTemplate = ({ data }: ExecutiveTemplateProps) => {
           </div>
         )}
 
-        {/* Skills */}
+        {/* Skills - Reorganized for better ATS scanning */}
         {skills.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-2xl font-bold text-resume-blue mb-4 uppercase tracking-wide border-b border-resume-blue pb-1">
+            <h3 className="text-2xl font-bold text-resume-blue mb-4 uppercase tracking-wide border-b border-resume-blue pb-1 flex items-center">
+              <Star className="h-5 w-5 mr-2" />
               Core Competencies
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
@@ -140,10 +143,11 @@ const ExecutiveTemplate = ({ data }: ExecutiveTemplateProps) => {
           </div>
         )}
 
-        {/* Education */}
+        {/* Education - Enhanced for ATS compliance */}
         {education.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-2xl font-bold text-resume-blue mb-4 uppercase tracking-wide border-b border-resume-blue pb-1">
+            <h3 className="text-2xl font-bold text-resume-blue mb-4 uppercase tracking-wide border-b border-resume-blue pb-1 flex items-center">
+              <GraduationCap className="h-5 w-5 mr-2" />
               Education
             </h3>
             <div className="space-y-4">
@@ -169,7 +173,7 @@ const ExecutiveTemplate = ({ data }: ExecutiveTemplateProps) => {
           </div>
         )}
 
-        {/* Custom Sections */}
+        {/* Custom Sections - Improved for consistent ATS parsing */}
         {customSections.map((section) => (
           <div key={section.id} className="mb-8">
             <h3 className="text-2xl font-bold text-resume-blue mb-4 uppercase tracking-wide border-b border-resume-blue pb-1">

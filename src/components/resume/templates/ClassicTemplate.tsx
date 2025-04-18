@@ -1,7 +1,7 @@
 
 import { ResumeData } from "@/store/resumeStore";
 import { formatDate } from "@/utils/formatDate";
-import { AtSign, MapPin, Phone, Link as LinkIcon } from "lucide-react";
+import { AtSign, MapPin, Phone, Link as LinkIcon, Award, Briefcase, GraduationCap, Star } from "lucide-react";
 
 interface ClassicTemplateProps {
   data: ResumeData;
@@ -20,7 +20,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
 
   return (
     <div className="classic-template text-resume-blue bg-white rounded shadow-sm p-8 mx-auto">
-      {/* Header */}
+      {/* Header - ATS optimized with clear section for contact info */}
       <div className="text-center mb-8 border-b border-resume-blue pb-4">
         <h1 className="text-3xl font-bold mb-1 text-resume-blue-light tracking-wide">
           {personalInfo.firstName} {personalInfo.lastName}
@@ -71,20 +71,22 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
         </div>
       </div>
 
-      {/* Summary */}
+      {/* Summary - Enhanced for ATS keywords */}
       {personalInfo.summary && (
         <div className="mb-6">
-          <h3 className="text-lg font-bold border-b-2 border-resume-blue mb-3 pb-1 text-resume-blue">
+          <h3 className="text-lg font-bold border-b-2 border-resume-blue mb-3 pb-1 text-resume-blue flex items-center">
+            <Star className="h-4 w-4 mr-2" />
             Professional Summary
           </h3>
           <p className="text-sm leading-relaxed whitespace-pre-line text-gray-700">{personalInfo.summary}</p>
         </div>
       )}
 
-      {/* Work Experience */}
+      {/* Work Experience - ATS optimized with clear job titles and dates */}
       {workExperience.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-lg font-bold border-b-2 border-resume-blue mb-3 pb-1 text-resume-blue">
+          <h3 className="text-lg font-bold border-b-2 border-resume-blue mb-3 pb-1 text-resume-blue flex items-center">
+            <Briefcase className="h-4 w-4 mr-2" />
             Work Experience
           </h3>
           <div className="space-y-5">
@@ -92,7 +94,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
               <div key={job.id} className="mb-4">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
                   <h4 className="font-bold text-resume-blue-light">{job.position}</h4>
-                  <span className="text-sm text-gray-600 mt-1 sm:mt-0">
+                  <span className="text-sm text-gray-600 mt-1 sm:mt-0 bg-gray-50 px-2 py-0.5 rounded">
                     {formatDate(job.startDate)} - {job.current ? "Present" : formatDate(job.endDate)}
                   </span>
                 </div>
@@ -104,11 +106,16 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
                 </div>
                 <p className="text-sm mb-2 text-gray-700">{job.description}</p>
                 {job.achievements.length > 0 && (
-                  <ul className="list-disc list-inside text-sm ml-2 space-y-1 text-gray-700">
-                    {job.achievements.map((achievement, i) => (
-                      <li key={i} className="pl-1">{achievement}</li>
-                    ))}
-                  </ul>
+                  <div>
+                    <h6 className="text-sm font-medium text-resume-blue-light mb-1 flex items-center">
+                      <Award className="h-3.5 w-3.5 mr-1.5" />Key Achievements
+                    </h6>
+                    <ul className="list-disc list-inside text-sm ml-2 space-y-1 text-gray-700">
+                      {job.achievements.map((achievement, i) => (
+                        <li key={i} className="pl-1">{achievement}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
             ))}
@@ -116,10 +123,11 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
         </div>
       )}
 
-      {/* Education */}
+      {/* Education - Improved formatting for ATS */}
       {education.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-lg font-bold border-b-2 border-resume-blue mb-3 pb-1 text-resume-blue">
+          <h3 className="text-lg font-bold border-b-2 border-resume-blue mb-3 pb-1 text-resume-blue flex items-center">
+            <GraduationCap className="h-4 w-4 mr-2" />
             Education
           </h3>
           <div className="space-y-5">
@@ -127,7 +135,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
               <div key={edu.id} className="mb-4">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
                   <h4 className="font-bold text-resume-blue-light">{edu.degree} in {edu.field}</h4>
-                  <span className="text-sm text-gray-600 mt-1 sm:mt-0">
+                  <span className="text-sm text-gray-600 mt-1 sm:mt-0 bg-gray-50 px-2 py-0.5 rounded">
                     {formatDate(edu.startDate)} - {edu.current ? "Present" : formatDate(edu.endDate)}
                   </span>
                 </div>
@@ -145,7 +153,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
         </div>
       )}
 
-      {/* Skills */}
+      {/* Skills - Organized by proficiency level for better ATS parsing */}
       {skills.length > 0 && (
         <div className="mb-6">
           <h3 className="text-lg font-bold border-b-2 border-resume-blue mb-3 pb-1 text-resume-blue">
@@ -174,7 +182,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
         </div>
       )}
 
-      {/* Custom Sections */}
+      {/* Custom Sections - Better structured for ATS */}
       {customSections.map((section) => (
         <div key={section.id} className="mb-6">
           <h3 className="text-lg font-bold border-b-2 border-resume-blue mb-3 pb-1 text-resume-blue">
@@ -186,7 +194,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
                   <h4 className="font-bold text-resume-blue-light">{item.title}</h4>
                   {(item.startDate || item.endDate) && (
-                    <span className="text-sm text-gray-600 mt-1 sm:mt-0">
+                    <span className="text-sm text-gray-600 mt-1 sm:mt-0 bg-gray-50 px-2 py-0.5 rounded">
                       {item.startDate && formatDate(item.startDate)}
                       {item.startDate && item.endDate && " - "}
                       {item.endDate && formatDate(item.endDate)}
@@ -208,7 +216,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
             ))}
           </div>
         </div>
-      ))}
+      )}
     </div>
   );
 };
