@@ -15,7 +15,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
     expert: skills.filter((skill) => skill.level === "expert"),
     advanced: skills.filter((skill) => skill.level === "advanced"),
     intermediate: skills.filter((skill) => skill.level === "intermediate"),
-    beginner: skills.filter((skill) => skill.level === "beginner"),
+    beginner: skills.filter((skill) => skill.level === "beginner")
   };
 
   return (
@@ -208,7 +208,7 @@ const ClassicTemplate = ({ data }: ClassicTemplateProps) => {
             ))}
           </div>
         </div>
-      )}
+      ))}
     </div>
   );
 };
