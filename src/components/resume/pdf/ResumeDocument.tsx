@@ -1,4 +1,3 @@
-
 import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
 import { ResumeData, ResumeTemplate } from "@/store/resumeStore";
 import { formatDate } from "@/utils/formatDate";
@@ -117,7 +116,6 @@ const styles = StyleSheet.create({
     padding: "2 6",
     fontSize: 9,
     margin: 2,
-    display: "inline",
   },
   skillsContainer: {
     flexDirection: "row",

@@ -8,11 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Education, useResumeStore } from "@/store/resumeStore";
 import { debounce } from "@/utils/debounce";
 import { Plus, Trash2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
+import { toast } from "@/components/ui/use-toast";
 
 type EducationFormValues = {
-  education: Education[];
+  education: (Education & { id?: string })[];
 };
 
 const EducationForm = () => {
@@ -22,12 +23,16 @@ const EducationForm = () => {
   const removeEducation = useResumeStore((state) => state.removeEducation);
   const setStep = useResumeStore((state) => state.setStep);
 
+  // Track if form has been initialized
+  const formInitialized = useRef(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     control,
     watch,
+    reset,
   } = useForm<EducationFormValues>({
     defaultValues: {
       education: education.length
@@ -54,20 +59,24 @@ const EducationForm = () => {
     name: "education",
   });
 
+  // Set the form as initialized after the first render
+  useEffect(() => {
+    formInitialized.current = true;
+  }, []);
+
   const onSubmit = (data: EducationFormValues) => {
     // Clear existing education entries
     education.forEach((edu) => removeEducation(edu.id));
 
     // Add new education entries
     data.education.forEach((edu) => {
-      if (edu.id) {
-        // Update existing education
-        updateEducation(edu.id, edu);
-      } else {
-        // Add new education without the id field
-        const { id, ...eduWithoutId } = edu;
-        addEducation(eduWithoutId);
-      }
+      const { id, ...eduWithoutId } = edu;
+      addEducation(eduWithoutId);
+    });
+
+    toast({
+      description: "Education saved successfully",
+      variant: "default",
     });
 
     setStep(3); // Move to the next step (Skills)
@@ -89,28 +98,45 @@ const EducationForm = () => {
   };
 
   // Setup auto-save with debounce
-  const debouncedSave = debounce((data: EducationFormValues) => {
-    // Remove existing education entries
-    education.forEach((edu) => removeEducation(edu.id));
+  const debouncedSave = useRef(
+    debounce((data: EducationFormValues) => {
+      if (!formInitialized.current) return;
+      
+      // Clear existing education entries to avoid duplication
+      const existingIds = new Set(education.map(edu => edu.id));
+      const formIds = new Set(data.education.filter(edu => edu.id).map(edu => edu.id));
+      
+      // Remove education entries that no longer exist in the form
+      education.forEach((edu) => {
+        if (!formIds.has(edu.id)) {
+          removeEducation(edu.id);
+        }
+      });
 
-    // Add updated education entries
-    data.education.forEach((edu) => {
-      if (edu.id) {
-        // Update existing education
-        updateEducation(edu.id, edu);
-      } else {
-        // Add new education without the id field
-        const { id, ...eduWithoutId } = edu;
-        addEducation(eduWithoutId);
-      }
-    });
-  }, 2000);
+      // Update or add education entries
+      data.education.forEach((edu) => {
+        if (edu.id && existingIds.has(edu.id)) {
+          // Update existing education
+          updateEducation(edu.id, edu);
+        } else {
+          // Add new education
+          const { id, ...eduWithoutId } = edu;
+          addEducation(eduWithoutId);
+        }
+      });
+      
+      toast({
+        description: "Education saved automatically",
+        duration: 2000,
+      });
+    }, 2000)
+  ).current;
 
   // Watch for changes and auto-save
   const watchAllEducation = watch();
 
   useEffect(() => {
-    if (fields.length > 0) {
+    if (formInitialized.current && fields.length > 0) {
       debouncedSave(watchAllEducation);
     }
   }, [watchAllEducation, debouncedSave, fields.length]);
@@ -134,6 +160,12 @@ const EducationForm = () => {
                 >
                   <Trash2 className="h-5 w-5" />
                 </Button>
+
+                {/* Hidden field to track the ID */}
+                <input
+                  type="hidden"
+                  {...register(`education.${index}.id` as const)}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div className="space-y-2">

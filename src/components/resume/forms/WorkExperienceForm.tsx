@@ -7,13 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useResumeStore, WorkExperience } from "@/store/resumeStore";
 import { debounce } from "@/utils/debounce";
-import { Plus, Trash2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
+import { toast } from "@/components/ui/use-toast";
 
 type WorkExperienceFormValues = {
   experiences: (Omit<WorkExperience, "id" | "achievements"> & {
     achievements: string;
+    id?: string;
   })[];
 };
 
@@ -23,6 +25,9 @@ const WorkExperienceForm = () => {
   const updateWorkExperience = useResumeStore((state) => state.updateWorkExperience);
   const removeWorkExperience = useResumeStore((state) => state.removeWorkExperience);
   const setStep = useResumeStore((state) => state.setStep);
+  
+  // Track if form has been initialized
+  const formInitialized = useRef(false);
 
   // Transform work experiences for the form
   const formattedExperiences = workExperiences.map((exp) => ({
@@ -30,15 +35,13 @@ const WorkExperienceForm = () => {
     achievements: exp.achievements.join("\n"),
   }));
 
-  const [editingExperience, setEditingExperience] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
     formState: { errors },
     control,
-    reset,
     watch,
+    reset,
   } = useForm<WorkExperienceFormValues>({
     defaultValues: {
       experiences: formattedExperiences.length
@@ -63,30 +66,87 @@ const WorkExperienceForm = () => {
     name: "experiences",
   });
 
+  // Set the form as initialized after the first render
+  useEffect(() => {
+    formInitialized.current = true;
+  }, []);
+
+  // Setup auto-save with debounce
+  const debouncedSave = useRef(
+    debounce((data: WorkExperienceFormValues) => {
+      if (!formInitialized.current) return;
+      
+      // Clear existing work experiences to avoid duplication
+      const existingIds = new Set(workExperiences.map(exp => exp.id));
+      const formIds = new Set(data.experiences.filter(exp => exp.id).map(exp => exp.id));
+      
+      // Remove experiences that no longer exist in the form
+      workExperiences.forEach((exp) => {
+        if (!formIds.has(exp.id)) {
+          removeWorkExperience(exp.id);
+        }
+      });
+
+      // Update or add experiences
+      data.experiences.forEach((exp) => {
+        const achievements = exp.achievements
+          ? exp.achievements
+              .split("\n")
+              .map((achievement) => achievement.trim())
+              .filter((achievement) => achievement.length > 0)
+          : [];
+
+        if (exp.id && existingIds.has(exp.id)) {
+          // Update existing experience
+          updateWorkExperience(exp.id, {
+            ...exp,
+            achievements,
+          });
+        } else {
+          // Add new experience
+          const { id, ...expWithoutId } = exp;
+          addWorkExperience({
+            ...expWithoutId,
+            achievements,
+          });
+        }
+      });
+      
+      toast({
+        description: "Work experience saved automatically",
+        duration: 2000,
+      });
+    }, 2000)
+  ).current;
+
   const onSubmit = (data: WorkExperienceFormValues) => {
-    // Clear existing work experiences
-    workExperiences.forEach((exp) => removeWorkExperience(exp.id));
+    // Clear existing work experiences to avoid duplication
+    workExperiences.forEach((exp) => {
+      removeWorkExperience(exp.id);
+    });
 
     // Add new work experiences
     data.experiences.forEach((exp) => {
       const achievements = exp.achievements
-        .split("\n")
-        .map((achievement) => achievement.trim())
-        .filter((achievement) => achievement.length > 0);
+        ? exp.achievements
+            .split("\n")
+            .map((achievement) => achievement.trim())
+            .filter((achievement) => achievement.length > 0)
+        : [];
 
+      const { id, ...expWithoutId } = exp;
       addWorkExperience({
-        position: exp.position,
-        company: exp.company,
-        location: exp.location,
-        startDate: exp.startDate,
-        endDate: exp.endDate,
-        current: exp.current,
-        description: exp.description,
+        ...expWithoutId,
         achievements,
       });
     });
 
-    setStep(2); // Move to the next step (Education)
+    toast({
+      description: "Work experiences saved successfully",
+      variant: "default",
+    });
+
+    setStep(2);
   };
 
   const addNewExperience = () => {
@@ -102,36 +162,11 @@ const WorkExperienceForm = () => {
     });
   };
 
-  // Setup auto-save with debounce
-  const debouncedSave = debounce((data: WorkExperienceFormValues) => {
-    // Remove existing experiences
-    workExperiences.forEach((exp) => removeWorkExperience(exp.id));
-
-    // Add updated experiences
-    data.experiences.forEach((exp) => {
-      const achievements = exp.achievements
-        .split("\n")
-        .map((achievement) => achievement.trim())
-        .filter((achievement) => achievement.length > 0);
-
-      addWorkExperience({
-        position: exp.position,
-        company: exp.company,
-        location: exp.location,
-        startDate: exp.startDate,
-        endDate: exp.endDate,
-        current: exp.current,
-        description: exp.description,
-        achievements,
-      });
-    });
-  }, 2000);
-
   // Watch for changes and auto-save
   const watchAllExperiences = watch();
   
   useEffect(() => {
-    if (fields.length > 0) {
+    if (formInitialized.current && fields.length > 0) {
       debouncedSave(watchAllExperiences);
     }
   }, [watchAllExperiences, debouncedSave, fields.length]);
@@ -155,6 +190,12 @@ const WorkExperienceForm = () => {
                 >
                   <Trash2 className="h-5 w-5" />
                 </Button>
+
+                {/* Hidden field to track the ID */}
+                <input
+                  type="hidden"
+                  {...register(`experiences.${index}.id` as const)}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div className="space-y-2">
