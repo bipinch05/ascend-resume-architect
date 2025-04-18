@@ -28,6 +28,8 @@ const WorkExperienceForm = () => {
   
   // Track if form has been initialized
   const formInitialized = useRef(false);
+  // Track if autosave is enabled
+  const autosaveEnabled = useRef(false);
 
   // Transform work experiences for the form
   const formattedExperiences = workExperiences.map((exp) => ({
@@ -69,21 +71,32 @@ const WorkExperienceForm = () => {
   // Set the form as initialized after the first render
   useEffect(() => {
     formInitialized.current = true;
+    
+    // Add a small delay before enabling autosave to prevent initial save
+    const timer = setTimeout(() => {
+      autosaveEnabled.current = true;
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   // Setup auto-save with debounce
   const debouncedSave = useRef(
     debounce((data: WorkExperienceFormValues) => {
-      if (!formInitialized.current) return;
+      if (!formInitialized.current || !autosaveEnabled.current) return;
       
-      // Clear existing work experiences to avoid duplication
-      const existingIds = new Set(workExperiences.map(exp => exp.id));
-      const formIds = new Set(data.experiences.filter(exp => exp.id).map(exp => exp.id));
+      // Create a map of existing experiences by ID for quick lookup
+      const existingExpMap = new Map(workExperiences.map(exp => [exp.id, exp]));
       
-      // Remove experiences that no longer exist in the form
-      workExperiences.forEach((exp) => {
-        if (!formIds.has(exp.id)) {
-          removeWorkExperience(exp.id);
+      // Create a map of form experiences by ID for quick lookup
+      const formExpMap = new Map(
+        data.experiences.filter(exp => exp.id).map(exp => [exp.id, exp])
+      );
+      
+      // IDs that no longer exist in the form should be removed
+      existingExpMap.forEach((_, id) => {
+        if (!formExpMap.has(id)) {
+          removeWorkExperience(id);
         }
       });
 
@@ -96,14 +109,15 @@ const WorkExperienceForm = () => {
               .filter((achievement) => achievement.length > 0)
           : [];
 
-        if (exp.id && existingIds.has(exp.id)) {
+        if (exp.id && existingExpMap.has(exp.id)) {
           // Update existing experience
           updateWorkExperience(exp.id, {
             ...exp,
             achievements,
           });
-        } else {
-          // Add new experience
+        } else if (!exp.id) {
+          // Only add new experiences if they don't have an ID yet
+          // (prevents duplicate additions)
           const { id, ...expWithoutId } = exp;
           addWorkExperience({
             ...expWithoutId,
@@ -120,6 +134,9 @@ const WorkExperienceForm = () => {
   ).current;
 
   const onSubmit = (data: WorkExperienceFormValues) => {
+    // Disable autosave during manual save
+    autosaveEnabled.current = false;
+    
     // Clear existing work experiences to avoid duplication
     workExperiences.forEach((exp) => {
       removeWorkExperience(exp.id);
@@ -145,6 +162,11 @@ const WorkExperienceForm = () => {
       description: "Work experiences saved successfully",
       variant: "default",
     });
+    
+    // Re-enable autosave
+    setTimeout(() => {
+      autosaveEnabled.current = true;
+    }, 1000);
 
     setStep(2);
   };

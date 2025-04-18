@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -170,16 +169,19 @@ export const useResumeStore = create<ResumeState>()(
         lastSaved: new Date().toISOString(),
       })),
       
-      addWorkExperience: (workExperience) => set((state) => ({
-        data: {
-          ...state.data,
-          workExperience: [
-            ...state.data.workExperience,
-            { ...workExperience, id: generateId() },
-          ],
-        },
-        lastSaved: new Date().toISOString(),
-      })),
+      addWorkExperience: (workExperience) => set((state) => {
+        const newId = generateId();
+        return {
+          data: {
+            ...state.data,
+            workExperience: [
+              ...state.data.workExperience,
+              { ...workExperience, id: newId },
+            ],
+          },
+          lastSaved: new Date().toISOString(),
+        };
+      }),
       
       updateWorkExperience: (id, workExperience) => set((state) => ({
         data: {
