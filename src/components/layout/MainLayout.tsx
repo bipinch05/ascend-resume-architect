@@ -10,7 +10,7 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-background text-foreground dark:bg-gray-900">
       <Header />
       <main className="flex-grow w-full max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
         {children}

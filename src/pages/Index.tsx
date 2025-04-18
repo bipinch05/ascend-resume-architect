@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { useResumeStore } from "@/store/resumeStore";
@@ -15,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { LayoutTemplate, PaintBucket } from "lucide-react";
 
 const Index = () => {
-  const { currentStep, template, setTemplate } = useResumeStore();
+  const { currentStep, template } = useResumeStore();
   const [isTemplateSelectorOpen, setIsTemplateSelectorOpen] = useState(false);
 
   const renderCurrentStep = () => {
@@ -42,8 +41,8 @@ const Index = () => {
       <div className="container py-8">
         <div className="flex flex-col md:flex-row justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-resume-blue mb-2">Build Your Resume</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-primary mb-2 dark:text-white">Build Your Resume</h1>
+            <p className="text-muted-foreground dark:text-gray-400">
               Create a professional resume that will help you stand out and get hired.
             </p>
           </div>

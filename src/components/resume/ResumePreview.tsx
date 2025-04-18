@@ -6,7 +6,7 @@ import ExecutiveTemplate from "./templates/ExecutiveTemplate";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Download, RefreshCw } from "lucide-react";
-import { pdf, PDFDownloadLink } from "@react-pdf/renderer";
+import { pdf } from "@react-pdf/renderer";
 import { useState } from "react";
 import { ResumeDocument } from "./pdf/ResumeDocument";
 
@@ -18,14 +18,25 @@ const ResumePreview = () => {
   const handleDownloadPDF = async () => {
     setLoading(true);
     try {
+      // Create PDF document
       const blob = await pdf(<ResumeDocument template={template} data={data} />).toBlob();
+      
+      // Create download link
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = `${data.personalInfo.firstName}_${data.personalInfo.lastName}_Resume.pdf`;
+      
+      // Trigger download
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      
+      // Cleanup
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+      }, 100);
+
       toast({
         title: "Success",
         description: "Resume downloaded successfully!",
@@ -58,7 +69,7 @@ const ResumePreview = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="bg-white p-4 border-b flex justify-between items-center">
+      <div className="bg-card dark:bg-gray-800 p-4 border-b border-border flex justify-between items-center">
         <h2 className="text-lg font-medium">Resume Preview</h2>
         <Button
           variant="outline"
@@ -79,7 +90,7 @@ const ResumePreview = () => {
           )}
         </Button>
       </div>
-      <div className="flex-grow overflow-auto bg-gray-100 p-4">
+      <div className="flex-grow overflow-auto bg-muted/50 dark:bg-gray-800/50 p-4">
         <div className="resume-paper">{renderTemplate()}</div>
       </div>
     </div>
