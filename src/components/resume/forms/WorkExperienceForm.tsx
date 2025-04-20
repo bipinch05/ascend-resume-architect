@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,8 +30,12 @@ const WorkExperienceForm = () => {
   const formInitialized = useRef(false);
   // Track if autosave is enabled
   const autosaveEnabled = useRef(false);
+  // Track if manual save is in progress
+  const manualSaveInProgress = useRef(false);
   // Track IDs of experiences that are being managed
   const managedExperienceIds = useRef<Set<string>>(new Set());
+  // Track if the form is ready for submission
+  const isFormReady = useRef(false);
 
   // Transform work experiences for the form
   const formattedExperiences = workExperiences.map((exp) => ({
@@ -40,9 +45,11 @@ const WorkExperienceForm = () => {
 
   // Set initial managed IDs
   useEffect(() => {
-    workExperiences.forEach(exp => {
-      managedExperienceIds.current.add(exp.id);
-    });
+    if (!formInitialized.current) {
+      workExperiences.forEach(exp => {
+        managedExperienceIds.current.add(exp.id);
+      });
+    }
   }, [workExperiences]);
 
   const {
@@ -80,92 +87,51 @@ const WorkExperienceForm = () => {
 
   // Set the form as initialized after the first render
   useEffect(() => {
-    formInitialized.current = true;
-    
-    // Add a small delay before enabling autosave to prevent initial save
-    const timer = setTimeout(() => {
-      autosaveEnabled.current = true;
-    }, 1000);
-    
-    return () => clearTimeout(timer);
+    if (!formInitialized.current) {
+      formInitialized.current = true;
+      
+      // Add a small delay before enabling autosave to prevent initial save
+      const timer = setTimeout(() => {
+        autosaveEnabled.current = true;
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
   }, []);
 
-  // Setup auto-save with debounce
-  const debouncedSave = useRef(
-    debounce((data: WorkExperienceFormValues) => {
-      if (!formInitialized.current || !autosaveEnabled.current) return;
-      
-      // Create a map of existing experiences by ID for quick lookup
-      const existingExpMap = new Map(workExperiences.map(exp => [exp.id, exp]));
-      
-      // Create a map of form experiences by ID for quick lookup
-      const formExpMap = new Map(
-        data.experiences.filter(exp => exp.id).map(exp => [exp.id, exp])
-      );
-      
-      // Track current form IDs to identify what's been removed
-      const currentFormIds = new Set(data.experiences.filter(exp => exp.id).map(exp => exp.id as string));
-      
-      // IDs that no longer exist in the form should be removed (they were deleted by user)
-      managedExperienceIds.current.forEach(id => {
-        if (!currentFormIds.has(id)) {
-          removeWorkExperience(id);
-          managedExperienceIds.current.delete(id);
-        }
-      });
+  // Process form data and update the store
+  const processFormData = (data: WorkExperienceFormValues, isAutoSave = false) => {
+    if (isAutoSave && !autosaveEnabled.current) return;
+    if (manualSaveInProgress.current) return;
 
-      // Update or add experiences
-      data.experiences.forEach((exp, index) => {
-        const achievements = exp.achievements
-          ? exp.achievements
-              .split("\n")
-              .map((achievement) => achievement.trim())
-              .filter((achievement) => achievement.length > 0)
-          : [];
-
-        if (exp.id && existingExpMap.has(exp.id)) {
-          // Update existing experience
-          updateWorkExperience(exp.id, {
-            ...exp,
-            achievements,
-          });
-        } else if (!exp.id) {
-          // Only add new experiences if they don't have an ID yet
-          // (prevents duplicate additions)
-          const { id, ...expWithoutId } = exp;
-          
-          // Add the new experience
-          addWorkExperience({
-            ...expWithoutId,
-            achievements,
-          });
-          
-          // Find the newly added experience in the store (it will have a new ID)
-          // We need to update the form field with this ID to prevent duplicate creation
-          if (workExperiences.length > index) {
-            const newId = workExperiences[workExperiences.length - 1].id;
-            setValue(`experiences.${index}.id`, newId);
-            managedExperienceIds.current.add(newId);
-          }
-        }
-      });
-      
-      toast({
-        description: "Work experience saved automatically",
-        duration: 2000,
-      });
-    }, 2000)
-  ).current;
-
-  const onSubmit = (data: WorkExperienceFormValues) => {
-    // Disable autosave during manual save
-    autosaveEnabled.current = false;
+    if (!isAutoSave) {
+      manualSaveInProgress.current = true;
+    }
     
-    // Keep track of new IDs
-    const updatedIds = new Set<string>();
+    // Create maps for quick lookups
+    const existingExpMap = new Map(workExperiences.map(exp => [exp.id, exp]));
+    const formExpMap = new Map(
+      data.experiences.filter(exp => exp.id).map(exp => [exp.id, exp])
+    );
     
-    // Update existing work experiences or add new ones
-    data.experiences.forEach((exp, index) => {
+    // Track current form IDs to identify what's been removed
+    const currentFormIds = new Set(
+      data.experiences
+        .filter(exp => exp.id)
+        .map(exp => exp.id as string)
+    );
+    
+    // Remove experiences that no longer exist in the form
+    managedExperienceIds.current.forEach(id => {
+      if (!currentFormIds.has(id)) {
+        removeWorkExperience(id);
+        managedExperienceIds.current.delete(id);
+      }
+    });
+
+    // Update or add experiences
+    for (let i = 0; i < data.experiences.length; i++) {
+      const exp = data.experiences[i];
       const achievements = exp.achievements
         ? exp.achievements
             .split("\n")
@@ -173,51 +139,68 @@ const WorkExperienceForm = () => {
             .filter((achievement) => achievement.length > 0)
         : [];
 
-      if (exp.id) {
+      if (exp.id && existingExpMap.has(exp.id)) {
         // Update existing experience
         updateWorkExperience(exp.id, {
           ...exp,
           achievements,
         });
-        updatedIds.add(exp.id);
-      } else {
-        // Add new experience
+      } else if (!exp.id) {
+        // Only add new experiences if they don't have an ID yet
         const { id, ...expWithoutId } = exp;
+        
+        // Add the new experience
         addWorkExperience({
           ...expWithoutId,
           achievements,
         });
         
-        // Find the newly added experience in the store (it will have a new ID)
-        if (workExperiences.length > 0) {
-          const newId = workExperiences[workExperiences.length - 1].id;
-          if (newId) {
-            updatedIds.add(newId);
-            managedExperienceIds.current.add(newId);
-          }
+        // Get the newly generated ID from the store
+        const newId = workExperiences[workExperiences.length - 1]?.id;
+        if (newId) {
+          // Update form with the new ID
+          setValue(`experiences.${i}.id`, newId);
+          managedExperienceIds.current.add(newId);
         }
       }
-    });
+    }
     
-    // Remove experiences that aren't in the form anymore
-    workExperiences.forEach((exp) => {
-      if (!updatedIds.has(exp.id) && !data.experiences.some(formExp => formExp.id === exp.id)) {
-        removeWorkExperience(exp.id);
-        managedExperienceIds.current.delete(exp.id);
+    // Show a toast message
+    if (!isAutoSave) {
+      toast({
+        description: "Work experiences saved successfully",
+        variant: "default",
+      });
+      
+      // Move to next step
+      setStep(2);
+      
+      // Re-enable autosave and reset manual save flag
+      setTimeout(() => {
+        manualSaveInProgress.current = false;
+        autosaveEnabled.current = true;
+      }, 1000);
+    } else {
+      toast({
+        description: "Work experience saved automatically",
+        duration: 2000,
+      });
+    }
+  };
+
+  // Setup auto-save with debounce
+  const debouncedSave = useRef(
+    debounce((data: WorkExperienceFormValues) => {
+      if (formInitialized.current && fields.length > 0 && !manualSaveInProgress.current) {
+        processFormData(data, true);
       }
-    });
+    }, 2000)
+  ).current;
 
-    toast({
-      description: "Work experiences saved successfully",
-      variant: "default",
-    });
-    
-    // Re-enable autosave
-    setTimeout(() => {
-      autosaveEnabled.current = true;
-    }, 1000);
-
-    setStep(2);
+  const onSubmit = (data: WorkExperienceFormValues) => {
+    // Disable autosave during manual save
+    autosaveEnabled.current = false;
+    processFormData(data, false);
   };
 
   const addNewExperience = () => {
@@ -237,7 +220,7 @@ const WorkExperienceForm = () => {
   const watchAllExperiences = watch();
   
   useEffect(() => {
-    if (formInitialized.current && fields.length > 0) {
+    if (formInitialized.current && fields.length > 0 && autosaveEnabled.current) {
       debouncedSave(watchAllExperiences);
     }
   }, [watchAllExperiences, debouncedSave, fields.length]);
@@ -257,7 +240,13 @@ const WorkExperienceForm = () => {
                   variant="ghost"
                   size="icon"
                   className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
-                  onClick={() => remove(index)}
+                  onClick={() => {
+                    const id = getValues(`experiences.${index}.id`);
+                    if (id) {
+                      managedExperienceIds.current.delete(id);
+                    }
+                    remove(index);
+                  }}
                 >
                   <Trash2 className="h-5 w-5" />
                 </Button>
