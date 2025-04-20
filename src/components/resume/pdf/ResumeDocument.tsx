@@ -832,7 +832,7 @@ export const ResumeDocument = ({ template, data }: ResumeDocumentProps) => {
               </View>
             ))}
           </View>
-        )}
+        ))}
       </Page>
     </Document>
   );
