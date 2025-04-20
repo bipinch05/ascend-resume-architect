@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -99,7 +100,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans dark:bg-slate-900 dark:text-slate-200;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -136,4 +137,29 @@
 
 .executive-template {
   padding: 1.5cm;
+}
+
+/* New Template Styles */
+.minimal-template {
+  padding: 2cm;
+}
+
+.creative-template {
+  padding: 0;
+}
+
+.professional-template {
+  padding: 1.5cm;
+}
+
+/* Dark mode preview wrapper */
+.preview-wrapper {
+  @apply bg-slate-800 p-6 rounded-lg;
+}
+
+/* PDF preview always stays light */
+.resume-paper div, .resume-paper p, .resume-paper h1, .resume-paper h2, 
+.resume-paper h3, .resume-paper h4, .resume-paper h5, .resume-paper h6, 
+.resume-paper span, .resume-paper li {
+  color: hsl(var(--resume-text)) !important;
 }

@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ResumeTemplate = 'classic' | 'modern' | 'executive';
+export type ResumeTemplate = 
+  | "classic" 
+  | "modern" 
+  | "executive" 
+  | "minimal" 
+  | "creative" 
+  | "professional";
 
 export type PersonalInfo = {
   firstName: string;

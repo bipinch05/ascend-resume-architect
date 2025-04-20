@@ -3,6 +3,9 @@ import { useResumeStore } from "@/store/resumeStore";
 import ClassicTemplate from "./templates/ClassicTemplate";
 import ModernTemplate from "./templates/ModernTemplate";
 import ExecutiveTemplate from "./templates/ExecutiveTemplate";
+import MinimalTemplate from "./templates/MinimalTemplate";
+import CreativeTemplate from "./templates/CreativeTemplate";
+import ProfessionalTemplate from "./templates/ProfessionalTemplate";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Download, RefreshCw } from "lucide-react";
@@ -17,9 +20,10 @@ const ResumePreview = () => {
 
   const handleDownloadPDF = async () => {
     setLoading(true);
+    let blob = null;
     try {
       // Create PDF document
-      const blob = await pdf(<ResumeDocument template={template} data={data} />).toBlob();
+      blob = await pdf(<ResumeDocument template={template} data={data} />).toBlob();
       
       // Create download link
       const url = URL.createObjectURL(blob);
@@ -51,6 +55,10 @@ const ResumePreview = () => {
       });
     } finally {
       setLoading(false);
+      if (blob) {
+        // Additional cleanup to help with memory management
+        URL.revokeObjectURL(URL.createObjectURL(blob));
+      }
     }
   };
 
@@ -62,18 +70,24 @@ const ResumePreview = () => {
         return <ModernTemplate data={data} />;
       case "executive":
         return <ExecutiveTemplate data={data} />;
+      case "minimal":
+        return <MinimalTemplate data={data} />;
+      case "creative":
+        return <CreativeTemplate data={data} />;
+      case "professional":
+        return <ProfessionalTemplate data={data} />;
       default:
         return <ClassicTemplate data={data} />;
     }
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="bg-card dark:bg-gray-800 p-4 border-b border-border flex justify-between items-center">
-        <h2 className="text-lg font-medium">Resume Preview</h2>
+    <div className="h-full flex flex-col dark:bg-slate-900">
+      <div className="bg-card dark:bg-slate-800 p-4 border-b border-border dark:border-slate-700 flex justify-between items-center">
+        <h2 className="text-lg font-medium dark:text-white">Resume Preview</h2>
         <Button
           variant="outline"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
           onClick={handleDownloadPDF}
           disabled={loading}
         >
@@ -90,7 +104,7 @@ const ResumePreview = () => {
           )}
         </Button>
       </div>
-      <div className="flex-grow overflow-auto bg-muted/50 dark:bg-gray-800/50 p-4">
+      <div className="flex-grow overflow-auto bg-muted/50 dark:bg-slate-800/50 p-4">
         <div className="resume-paper">{renderTemplate()}</div>
       </div>
     </div>
