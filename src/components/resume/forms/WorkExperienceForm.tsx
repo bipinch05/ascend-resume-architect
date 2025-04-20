@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,12 +29,21 @@ const WorkExperienceForm = () => {
   const formInitialized = useRef(false);
   // Track if autosave is enabled
   const autosaveEnabled = useRef(false);
+  // Track IDs of experiences that are being managed
+  const managedExperienceIds = useRef<Set<string>>(new Set());
 
   // Transform work experiences for the form
   const formattedExperiences = workExperiences.map((exp) => ({
     ...exp,
     achievements: exp.achievements.join("\n"),
   }));
+
+  // Set initial managed IDs
+  useEffect(() => {
+    workExperiences.forEach(exp => {
+      managedExperienceIds.current.add(exp.id);
+    });
+  }, [workExperiences]);
 
   const {
     register,
@@ -44,6 +52,8 @@ const WorkExperienceForm = () => {
     control,
     watch,
     reset,
+    getValues,
+    setValue,
   } = useForm<WorkExperienceFormValues>({
     defaultValues: {
       experiences: formattedExperiences.length
@@ -93,15 +103,19 @@ const WorkExperienceForm = () => {
         data.experiences.filter(exp => exp.id).map(exp => [exp.id, exp])
       );
       
-      // IDs that no longer exist in the form should be removed
-      existingExpMap.forEach((_, id) => {
-        if (!formExpMap.has(id)) {
+      // Track current form IDs to identify what's been removed
+      const currentFormIds = new Set(data.experiences.filter(exp => exp.id).map(exp => exp.id as string));
+      
+      // IDs that no longer exist in the form should be removed (they were deleted by user)
+      managedExperienceIds.current.forEach(id => {
+        if (!currentFormIds.has(id)) {
           removeWorkExperience(id);
+          managedExperienceIds.current.delete(id);
         }
       });
 
       // Update or add experiences
-      data.experiences.forEach((exp) => {
+      data.experiences.forEach((exp, index) => {
         const achievements = exp.achievements
           ? exp.achievements
               .split("\n")
@@ -119,10 +133,20 @@ const WorkExperienceForm = () => {
           // Only add new experiences if they don't have an ID yet
           // (prevents duplicate additions)
           const { id, ...expWithoutId } = exp;
+          
+          // Add the new experience
           addWorkExperience({
             ...expWithoutId,
             achievements,
           });
+          
+          // Find the newly added experience in the store (it will have a new ID)
+          // We need to update the form field with this ID to prevent duplicate creation
+          if (workExperiences.length > index) {
+            const newId = workExperiences[workExperiences.length - 1].id;
+            setValue(`experiences.${index}.id`, newId);
+            managedExperienceIds.current.add(newId);
+          }
         }
       });
       
@@ -137,13 +161,11 @@ const WorkExperienceForm = () => {
     // Disable autosave during manual save
     autosaveEnabled.current = false;
     
-    // Clear existing work experiences to avoid duplication
-    workExperiences.forEach((exp) => {
-      removeWorkExperience(exp.id);
-    });
-
-    // Add new work experiences
-    data.experiences.forEach((exp) => {
+    // Keep track of new IDs
+    const updatedIds = new Set<string>();
+    
+    // Update existing work experiences or add new ones
+    data.experiences.forEach((exp, index) => {
       const achievements = exp.achievements
         ? exp.achievements
             .split("\n")
@@ -151,11 +173,38 @@ const WorkExperienceForm = () => {
             .filter((achievement) => achievement.length > 0)
         : [];
 
-      const { id, ...expWithoutId } = exp;
-      addWorkExperience({
-        ...expWithoutId,
-        achievements,
-      });
+      if (exp.id) {
+        // Update existing experience
+        updateWorkExperience(exp.id, {
+          ...exp,
+          achievements,
+        });
+        updatedIds.add(exp.id);
+      } else {
+        // Add new experience
+        const { id, ...expWithoutId } = exp;
+        addWorkExperience({
+          ...expWithoutId,
+          achievements,
+        });
+        
+        // Find the newly added experience in the store (it will have a new ID)
+        if (workExperiences.length > 0) {
+          const newId = workExperiences[workExperiences.length - 1].id;
+          if (newId) {
+            updatedIds.add(newId);
+            managedExperienceIds.current.add(newId);
+          }
+        }
+      }
+    });
+    
+    // Remove experiences that aren't in the form anymore
+    workExperiences.forEach((exp) => {
+      if (!updatedIds.has(exp.id) && !data.experiences.some(formExp => formExp.id === exp.id)) {
+        removeWorkExperience(exp.id);
+        managedExperienceIds.current.delete(exp.id);
+      }
     });
 
     toast({

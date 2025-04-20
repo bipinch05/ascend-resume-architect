@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,6 +26,15 @@ const EducationForm = () => {
   const formInitialized = useRef(false);
   // Track if autosave is enabled
   const autosaveEnabled = useRef(false);
+  // Track IDs of education entries that are being managed
+  const managedEducationIds = useRef<Set<string>>(new Set());
+
+  // Set initial managed IDs
+  useEffect(() => {
+    education.forEach(edu => {
+      managedEducationIds.current.add(edu.id);
+    });
+  }, [education]);
 
   const {
     register,
@@ -35,6 +43,7 @@ const EducationForm = () => {
     control,
     watch,
     reset,
+    setValue,
   } = useForm<EducationFormValues>({
     defaultValues: {
       education: education.length
@@ -77,13 +86,37 @@ const EducationForm = () => {
     // Disable autosave during manual save
     autosaveEnabled.current = false;
     
-    // Clear existing education entries
-    education.forEach((edu) => removeEducation(edu.id));
-
-    // Add new education entries
-    data.education.forEach((edu) => {
-      const { id, ...eduWithoutId } = edu;
-      addEducation(eduWithoutId);
+    // Keep track of updated IDs
+    const updatedIds = new Set<string>();
+    
+    // Update existing education entries or add new ones
+    data.education.forEach((edu, index) => {
+      if (edu.id) {
+        // Update existing education
+        updateEducation(edu.id, edu);
+        updatedIds.add(edu.id);
+      } else {
+        // Add new education
+        const { id, ...eduWithoutId } = edu;
+        addEducation(eduWithoutId);
+        
+        // Find the newly added education in the store (it will have a new ID)
+        if (education.length > 0) {
+          const newId = education[education.length - 1].id;
+          if (newId) {
+            updatedIds.add(newId);
+            managedEducationIds.current.add(newId);
+          }
+        }
+      }
+    });
+    
+    // Remove education entries that aren't in the form anymore
+    education.forEach((edu) => {
+      if (!updatedIds.has(edu.id) && !data.education.some(formEdu => formEdu.id === edu.id)) {
+        removeEducation(edu.id);
+        managedEducationIds.current.delete(edu.id);
+      }
     });
 
     toast({
@@ -127,15 +160,19 @@ const EducationForm = () => {
         data.education.filter(edu => edu.id).map(edu => [edu.id, edu])
       );
       
-      // IDs that no longer exist in the form should be removed
-      existingEduMap.forEach((_, id) => {
-        if (!formEduMap.has(id)) {
+      // Track current form IDs to identify what's been removed
+      const currentFormIds = new Set(data.education.filter(edu => edu.id).map(edu => edu.id as string));
+      
+      // IDs that no longer exist in the form should be removed (they were deleted by user)
+      managedEducationIds.current.forEach(id => {
+        if (!currentFormIds.has(id)) {
           removeEducation(id);
+          managedEducationIds.current.delete(id);
         }
       });
 
       // Update or add education entries
-      data.education.forEach((edu) => {
+      data.education.forEach((edu, index) => {
         if (edu.id && existingEduMap.has(edu.id)) {
           // Update existing education
           updateEducation(edu.id, edu);
@@ -143,7 +180,17 @@ const EducationForm = () => {
           // Only add new education if they don't have an ID yet
           // (prevents duplicate additions)
           const { id, ...eduWithoutId } = edu;
+          
+          // Add the new education entry
           addEducation(eduWithoutId);
+          
+          // Find the newly added education in the store (it will have a new ID)
+          // We need to update the form field with this ID to prevent duplicate creation
+          if (education.length > index) {
+            const newId = education[education.length - 1].id;
+            setValue(`education.${index}.id`, newId);
+            managedEducationIds.current.add(newId);
+          }
         }
       });
       
