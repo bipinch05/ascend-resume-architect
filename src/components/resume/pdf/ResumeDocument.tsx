@@ -1,4 +1,3 @@
-
 import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
 import { ResumeData, ResumeTemplate } from "@/store/resumeStore";
 import { formatDate } from "@/utils/formatDate";
